@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitoring Dashboard</title>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <link rel="icon" type="image/svg" href="favicon.svg">
+    <style>
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --background: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-color: #2c3e50;
+    --transition: all 0.3s ease;
+}
+
+[data-scheme="dark-blue"] { --primary-color: #2980b9; --secondary-color: #2c3e50; }
+[data-scheme="orange"] { --primary-color: #e67e22; --secondary-color: #d35400; }
+[data-scheme="purple"] { --primary-color: #9b59b6; --secondary-color: #8e44ad; }
+[data-scheme="pink"] { --primary-color: #e91e63; --secondary-color: #c2185b; }
+[data-scheme="green"] { --primary-color: #2ecc71; --secondary-color: #27ae60; }
+
+[data-theme="darktheme"] { 
+    --card-bg: #212121; 
+    --background: #121212; 
+    --text-color: #ffffff; 
+}
+[data-theme="lighttheme"] { 
+    --card-bg: #ffffff; 
+    --background: #f5f7fa; 
+    --text-color: #2c3e50; 
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: var(--transition);
+    min-height: 100vh;
+}
+
+.container {
+    width: 95%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.login-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 440px;
+    margin: 5vh auto;
+    padding: 30px;
+    transform: translateY(20px);
+    opacity: 0;
+    animation: slideUp 0.6s forwards;
+}
+
+@keyframes slideUp {
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.dashboard-container {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.6s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 16px;
+    color: white;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    text-align: center;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.dashboard-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    transition: var(--transition);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+}
+
+.chart-container {
+    height: 200px;
+    margin-top: 15px;
+    position: relative;
+}
+
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.theme-selector, .darktheme-selector {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.theme-option {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.theme-option.active { border-color: white; }
+
+.metric-value {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 700;
+    margin: 8px 0;
+}
+
+.network-stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 12px 0;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.network-stats > div {
+    text-align: center;
+    min-width: 100px;
+}
+
+/* Login Form Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+input[type="text"], 
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+input[type="text"]:focus, 
+input[type="password"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+button[type="submit"]:hover {
+    filter: brightness(0.9);
+}
+
+.remember-me {
+    display: flex;
+    align-items: center; /* Vertically centers the elements */
+    justify-content: center; /* Horizontally centers the elements */
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.remember-me input {
+    width: auto; /* Keeps the checkbox size as is */
+}
+
+
+.realtime-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.interval-input {
+    width: 50px;
+    padding: 6px;
+    border: 2px solid var(--card-bg);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.interval-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+#realtime-toggle.active {
+    background: var(--secondary-color);
+}
+
+/* Theme Toggle Switch */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.labels {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    transition: opacity 0.3s ease-in-out;
+    color: white;
+}
+
+.labels::before {
+    content: attr(data-off);
+    position: absolute;
+    left: 8px;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.labels::after {
+    content: attr(data-on);
+    position: absolute;
+    right: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+input:checked + .slider + .labels::before {
+    opacity: 0;
+}
+
+input:checked + .slider + .labels::after {
+    opacity: 1;
+}
+
+.color-scheme-selector {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* For WebKit browsers (Chrome, Safari, Edge) */
+.interval-input::-webkit-inner-spin-button,
+.interval-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+.interval-input {
+    -moz-appearance: textfield;
+}
+
+/* From Uiverse.io by cuzpq */ 
+.theme-checkbox {
+  --toggle-size: 14px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 5em;
+  height: 2.5em;
+  background: -webkit-gradient(linear, left top, right top, color-stop(50%, #efefef), color-stop(50%, #2a2a2a)) no-repeat;
+  background: -o-linear-gradient(left, #efefef 50%, #2a2a2a 50%) no-repeat;
+  background: linear-gradient(to right, #efefef 50%, #2a2a2a 50%) no-repeat;
+  background-size: 205%;
+  background-position: 0;
+  -webkit-transition: 0.4s;
+  -o-transition: 0.4s;
+  transition: 0.4s;
+  border-radius: 99em;
+  position: relative;
+  cursor: pointer;
+  font-size: var(--toggle-size);
+}
+
+.theme-checkbox::before {
+  content: "";
+  width: 1.8em;
+  height: 1.8em;
+  position: absolute;
+  top: 0.35em;
+  left: 0.35em;
+  background: -webkit-gradient(linear, left top, right top, color-stop(50%, #efefef), color-stop(50%, #2a2a2a)) no-repeat;
+  background: -o-linear-gradient(left, #efefef 50%, #2a2a2a 50%) no-repeat;
+  background: linear-gradient(to right, #efefef 50%, #2a2a2a 50%) no-repeat;
+  background-size: 205%;
+  background-position: 100%;
+  border-radius: 50%;
+  -webkit-transition: 0.4s;
+  -o-transition: 0.4s;
+  transition: 0.4s;
+}
+
+.theme-checkbox:checked::before {
+  left: calc(100% - 1.8em - 0.35em);
+  background-position: 0;
+}
+
+.theme-checkbox:checked {
+  background-position: 100%;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+    }
+    
+    .controls {
+        flex-wrap: nowrap;
+        gap: 15px;
+    }
+    
+    .theme-option {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .switch {
+        width: 60px;
+        height: 30px;
+    }
+    
+    .slider:before {
+        height: 22px;
+        width: 22px;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(30px);
+    }
+    
+    .theme-checkbox {
+        --toggle-size: 16px;
+    }
+    
+    button {
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 20px;
+    }
+    
+    .dashboard-card {
+        min-height: 250px;
+    }
+    
+    .chart-container {
+        height: 150px;
+    }
+    
+    .network-stats > div {
+        min-width: 80px;
+    }
+    
+    .controls {
+        gap: 8px;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .interval-input {
+        width: 40px;
+    }
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-wrapper .terms-label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  margin-bottom: 25px;
+}
+
+.checkbox-wrapper .terms-label .label-text {
+  margin-left: 10px;
+}
+
+.checkbox-wrapper .checkbox-svg {
+  width: 30px;
+  height: 30px;
+}
+
+.checkbox-wrapper .checkbox-box {
+  fill: rgba(207, 205, 205, 0.393);
+  stroke: var(--primary-color);
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  transition: stroke-dashoffset 0.6s ease-in;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  gap: 50px;
+  padding-bottom: 500px;
+}
+
+.checkbox-wrapper .checkbox-tick {
+  stroke: var(--primary-color);
+  stroke-dasharray: 172;
+  stroke-dashoffset: 172;
+  transition: stroke-dashoffset 0.6s ease-in;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .terms-label .checkbox-box,
+  .checkbox-wrapper input[type="checkbox"]:checked + .terms-label .checkbox-tick {
+  stroke-dashoffset: 0;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Form -->
+        <div id="login-container" class="login-container">
+            <h2 id="systemname"><i class="fas fa-chart-line"></i> System Dashboard</h2>
+            <p style="margin: 20px 0 30px; color: #7f8c8d;">Enter your credentials to continue</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="text" id="username" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+<div class="checkbox-wrapper">
+    <input id="terms-checkbox-37" name="checkbox" type="checkbox">
+    <label class="terms-label" for="terms-checkbox-37">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 200 200" class="checkbox-svg">
+        <mask fill="white" id="path-1-inside-1_476_5-37">
+          <rect height="200" width="200"></rect>
+        </mask>
+        <rect mask="url(#path-1-inside-1_476_5-37)" stroke-width="40" class="checkbox-box" height="200" width="200"></rect>
+        <path stroke-width="15" d="M52 111.018L76.9867 136L149 64" class="checkbox-tick"></path>
+      </svg>
+      <span class="label-text">Remember Me</span>
+    </label>
+  </div>
+  
+  
+  
+                <button type="submit"><i class="fas fa-sign-in-alt"></i> Login</button>
+                <p id="watermark" style=" text-align: center; margin: 20px 0 30px; color: #7f8c8d; cursor: pointer;" onclick="window.open('https://github.com/Houloude9IOfficial', '_blank')">Developed by Houloude9</p>
+                <div id="error-message" style="color: #e74c3c; margin-top: 15px; display: none;"></div>
+            </form>
+        </div>
+
+        <div id="dashboard-container" class="dashboard-container">
+            <div class="header">
+                <h1 id="systemname"><i class="fas fa-chart-line"></i> System Dashboard</h1>
+                <div class="controls">
+                    <div class="theme-toggle">
+                        <label class="switch">
+                            <input type="checkbox" id="dark-mode-toggle" class="theme-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <!-- Color Scheme Selector -->
+                    <div class="color-scheme-selector">
+                        <div class="theme-option active" data-scheme="dark-blue" style="background: #2980b9"></div>
+                        <div class="theme-option" data-scheme="orange" style="background: #e67e22"></div>
+                        <div class="theme-option" data-scheme="purple" style="background: #9b59b6"></div>
+                        <div class="theme-option" data-scheme="pink" style="background: #e91e63"></div>
+                        <div class="theme-option" data-scheme="green" style="background: #2ecc71"></div>
+                    </div>
+                    <div class="realtime-controls">
+                        <button id="realtime-toggle"><i class="fas fa-play"></i> Realtime</button>
+                        <input type="number" id="refresh-interval" class="interval-input" value="5" min="1" max="60">
+                        <span></span>
+                    </div>
+                    <button id="refresh-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Refresh</button>
+                    <button id="logout-btn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <i class="fas fa-hard-drive"></i>
+                    <h3>Storage</h3>
+                    <div class="chart-container">
+                        <canvas id="db-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <i class="fas fa-microchip"></i>
+                    <h3>CPU Usage</h3>
+                    <div class="metric-value" id="cpu-usage">0%</div>
+                    <div class="chart-container">
+                        <canvas id="cpu-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <i class="fas fa-memory"></i>
+                    <h3>RAM Usage</h3>
+                    <div class="metric-value" id="ram-usage">0%</div>
+                    <div class="chart-container">
+                        <canvas id="ram-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <h3>Network Traffic</h3>
+                    <div class="network-stats">
+                        <div>
+                            <div class="metric-value" id="network-received">0</div>
+                            <small>Received (KB)</small>
+                        </div>
+                        <div>
+                            <div class="metric-value" id="network-sent">0</div>
+                            <small>Sent (KB)</small>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="network-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-card" id="gpu-card" style="display: none;">
+                    <i class="fas fa-tv"></i>
+                    <h3>GPU Usage</h3>
+                    <div class="metric-value" id="gpu-usage">0%</div>
+                    <div>Memory: <span id="gpu-mem-used">0</span> / <span id="gpu-mem-total">0</span> GB</div>
+                    <div class="chart-container">
+                        <canvas id="gpu-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+
+
+        const loginForm = document.getElementById('login-form');
+        const loginContainer = document.getElementById('login-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const errorMessage = document.getElementById('error-message');
+        let charts = {};
+        let currentServerData;
+
+        function formatStorage(valueMB) {
+            if (valueMB >= 1000) {
+                return (valueMB / 1000).toFixed(1) + ' TB';
+            }
+            return valueMB.toFixed(1) + ' GB';
+        }
+
+        function formatNetworkValue(bytes) {
+    const kb = bytes / 1024;
+    if (kb < 0.0001) {
+        return kb.toExponential(2) + ' KB';
+    } else {
+        return kb.toFixed(4) + ' KB';
+    }
+}
+
+        function initializeCharts(serverData) {
+            if (charts.dbChart) charts.dbChart.destroy();
+            if (charts.cpuChart) charts.cpuChart.destroy();
+            if (charts.ramChart) charts.ramChart.destroy();
+            if (charts.networkChart) charts.networkChart.destroy();
+
+            charts.dbChart = new Chart(document.getElementById('db-chart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Used', 'Free'],
+                    datasets: [{
+                        data: [serverData.DB_used, serverData.DB_all - serverData.DB_used],
+                        backgroundColor: [
+                            getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                            '#ecf0f1'
+                        ]
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const total = serverData.DB_all;
+                                    const value = ctx.raw;
+                                    return `${ctx.label}: ${formatStorage(value)} (${((value/total)*100).toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // CPU Usage
+            charts.cpuChart = createColumnChart('cpu-chart', serverData.SysUsage * 100, 'CPU Usage');
+            document.getElementById('cpu-usage').textContent = `${(serverData.SysUsage * 100).toFixed(1)}%`;
+
+            // RAM Usage
+            charts.ramChart = createColumnChart('ram-chart', serverData.RamUsage, 'RAM Usage');
+            document.getElementById('ram-usage').textContent = `${serverData.RamUsage.toFixed(1)}%`;
+
+            // Network Traffic
+            const netData = serverData.NetworkUsage;
+            charts.networkChart = new Chart(document.getElementById('network-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Received', 'Sent'],
+                    datasets: [{
+                        label: 'KB',
+                        data: [netData.totalReceived/1024, netData.totalSent/1024],
+                        backgroundColor: [
+                            getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                            getComputedStyle(document.body).getPropertyValue('--secondary-color')
+                        ]
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            
+            
+
+            document.getElementById('network-received').textContent = netData.totalReceived < 0.01 ? '0' : parseFloat(netData.totalReceived.toFixed(2));
+            document.getElementById('network-sent').textContent = netData.totalSent < 0.01 ? '0' : parseFloat(netData.totalSent.toFixed(2));
+
+
+
+            if (serverData.GpuUsage && serverData.GpuUsage.type === 'nvidia') {
+        document.getElementById('gpu-card').style.display = 'block';
+        const gpu = serverData.GpuUsage;
+        const memPercentage = (gpu.gpu_mem_used / gpu.gpu_mem_total * 100).toFixed(1);
+        
+        charts.gpuChart = new Chart(document.getElementById('gpu-chart'), {
+            type: 'bar',
+            data: {
+                labels: ['Core Usage', 'VRAM Usage'],
+                datasets: [{
+                    label: 'Percentage',
+                    data: [gpu.gpu_usage, memPercentage],
+                    backgroundColor: [
+                        getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                        getComputedStyle(document.body).getPropertyValue('--secondary-color')
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Percentage (%)' }
+                    }
+                }
+            }
+        });
+
+        document.getElementById('gpu-usage').textContent = `${gpu.gpu_usage}%`;
+        document.getElementById('gpu-mem-used').textContent = 
+            (gpu.gpu_mem_used / 1024).toFixed(2);
+        document.getElementById('gpu-mem-total').textContent = 
+            (gpu.gpu_mem_total / 1024).toFixed(2);
+    } else {
+        document.getElementById('gpu-card').style.display = 'none';
+        if (charts.gpuChart) charts.gpuChart.destroy();
+    }
+
+
+        }
+
+        function createColumnChart(canvasId, value, label) {
+            return new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: [label],
+                    datasets: [{
+                        label: 'Usage %',
+                        data: [value],
+                        backgroundColor: getComputedStyle(document.body).getPropertyValue('--primary-color')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Percentage (%)' }
+                        }
+                    }
+                }
+            });
+        }
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+darkModeToggle.addEventListener('change', () => {
+    const isDark = darkModeToggle.checked;
+    updateTheme(isDark);
+});
+
+function updateTheme(isDark) {
+    document.body.setAttribute('data-theme', isDark ? 'darktheme' : 'lighttheme');
+    localStorage.setItem('darkMode', isDark ? 'dark' : 'light');
+    updateChartColors();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    performLogin(username, password, false, true)
+
+const colorSchemeOptions = document.querySelectorAll('.theme-option');
+colorSchemeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        colorSchemeOptions.forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+        
+        const scheme = option.getAttribute('data-scheme');
+        document.body.setAttribute('data-scheme', scheme);
+        localStorage.setItem('colorScheme', scheme);
+        
+        updateChartColors();
+    });
+});
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode) {
+        const isDark = savedDarkMode === 'dark';
+        darkModeToggle.checked = isDark;
+        updateTheme(isDark);
+    }
+    
+    const savedScheme = localStorage.getItem('colorScheme') || 'dark-blue';
+    document.body.setAttribute('data-scheme', savedScheme);
+    document.querySelectorAll('.color-scheme-selector .theme-option').forEach(opt => {
+        if (opt.getAttribute('data-scheme') === savedScheme) {
+            opt.classList.add('active');
+        }
+    });
+
+    const savedUsername = localStorage.getItem('username');
+    const savedPassword = localStorage.getItem('password');
+    if (savedUsername && savedPassword) {
+        document.getElementById('username').value = savedUsername
+        document.getElementById('password').value = savedPassword
+        document.getElementById('terms-checkbox-37').checked = true; // REMEMBER ME CHECKBOX
+        performLogin(savedUsername, savedPassword, true);
+    }
+
+
+
+    document.getElementById('systemname').innerHTML = `<h1 id="systemname"><i class="fas fa-chart-line"></i> ${dashboardname}</h1>`
+    document.title = dashboardname
+    if(allowwatermark === false) {
+        document.getElementById('watermark').style.display = 'none';
+    }
+
+});
+
+
+var port = DefaultPort
+        // Login Handling
+        async function performLogin(username, password, rememberMe, test) {
+            try {
+                const response = await fetch(`http://localhost:${DefaultPort}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (response.status === 102 && !test) {
+      throw new Error('Server not responding');
+    }
+                if (!response.ok && !test) throw new Error('Login failed');
+                
+                if (rememberMe && !test) {
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('password', password);
+                } else {
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('password');
+                }
+
+                if(response.status === 200) {
+                    const data = await response.json();
+                currentServerData = data;
+                
+                loginContainer.style.display = 'none';
+                dashboardContainer.style.display = 'block';
+                let syncedserverdata = data
+                initializeCharts(syncedserverdata);
+                }
+ 
+
+                
+            } catch (error) {
+                if(!test) {
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+                setTimeout(() => errorMessage.style.display = 'none', 3000);
+                }
+            }
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('terms-checkbox-37').checked;
+            await performLogin(username, password, rememberMe);
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('username');
+            localStorage.removeItem('password');
+            dashboardContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
+            Object.values(charts).forEach(chart => chart.destroy());
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            performLogin(localStorage.getItem('username'), localStorage.getItem('password'), localStorage.getItem('username'));
+        });
+
+
+
+                let isRealtimeActive = false;
+        let autoRefreshInterval = null;
+
+        function updateCharts(serverData) {
+            if (charts.dbChart) {
+                charts.dbChart.data.datasets[0].data = [serverData.DB_used, serverData.DB_all - serverData.DB_used];
+                charts.dbChart.update();
+            } else {
+                charts.dbChart = new Chart(document.getElementById('db-chart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Used', 'Free'],
+                        datasets: [{
+                            data: [serverData.DB_used, serverData.DB_all - serverData.DB_used],
+                            backgroundColor: [
+                                getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                                '#ecf0f1'
+                            ]
+                        }]
+                    },
+                    options: { plugins: { tooltip: { callbacks: { label: ctx => {
+                        const total = serverData.DB_all;
+                        const value = ctx.raw;
+                        return `${ctx.label}: ${formatStorage(value)} (${((value/total)*100).toFixed(1)}%)`;
+                    }}}}}
+                });
+            }
+            
+
+
+
+
+
+                // NVIDIA GPU Stats
+    if (serverData.GpuUsage && serverData.GpuUsage.type === 'nvidia') {
+        const gpu = serverData.GpuUsage;
+        const memPercentage = (gpu.gpu_mem_used / gpu.gpu_mem_total * 100).toFixed(1);
+        
+        if (charts.gpuChart) {
+            charts.gpuChart.data.datasets[0].data = [gpu.gpu_usage, memPercentage];
+            charts.gpuChart.update();
+        } else {
+            document.getElementById('gpu-card').style.display = 'block';
+            charts.gpuChart = new Chart(document.getElementById('gpu-chart'), {
+            });
+        }
+
+        document.getElementById('gpu-usage').textContent = `${gpu.gpu_usage}%`;
+        document.getElementById('gpu-mem-used').textContent = 
+            (gpu.gpu_mem_used / 1024).toFixed(2);
+        document.getElementById('gpu-mem-total').textContent = 
+            (gpu.gpu_mem_total / 1024).toFixed(2);
+    } else {
+        document.getElementById('gpu-card').style.display = 'none';
+        if (charts.gpuChart) {
+            charts.gpuChart.destroy();
+            charts.gpuChart = null;
+        }
+    }
+
+
+
+            // Update CPU chart
+            const cpuValue = serverData.SysUsage * 100;
+            document.getElementById('cpu-usage').textContent = `${cpuValue.toFixed(1)}%`;
+            if (charts.cpuChart) {
+                charts.cpuChart.data.datasets[0].data = [cpuValue];
+                charts.cpuChart.update();
+            } else {
+                charts.cpuChart = createChart('cpu-chart', 'bar', ['CPU Usage'], [cpuValue], 'Usage %');
+            }
+
+            // Update RAM chart
+            const ramValue = serverData.RamUsage;
+            document.getElementById('ram-usage').textContent = `${ramValue.toFixed(1)}%`;
+            if (charts.ramChart) {
+                charts.ramChart.data.datasets[0].data = [ramValue];
+                charts.ramChart.update();
+            } else {
+                charts.ramChart = createChart('ram-chart', 'bar', ['RAM Usage'], [ramValue], 'Usage %');
+            }
+
+            // Update Network chart
+            const netData = serverData.NetworkUsage;
+            const received = (netData.totalReceived/1024).toFixed(1);
+            const sent = (netData.totalSent/1024).toFixed(1);
+            document.getElementById('network-received').textContent = netData.totalReceived < 0.01 ? '0' : parseFloat(netData.totalReceived.toFixed(2));
+            document.getElementById('network-sent').textContent = netData.totalSent < 0.01 ? '0' : parseFloat(netData.totalSent.toFixed(2));
+            
+            if (charts.networkChart) {
+                charts.networkChart.data.datasets[0].data = [received, sent];
+                charts.networkChart.update();
+            } else {
+                charts.networkChart = new Chart(document.getElementById('network-chart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Received', 'Sent'],
+                        datasets: [{
+                            label: 'KB',
+                            data: [received, sent],
+                            backgroundColor: [
+                                getComputedStyle(document.body).getPropertyValue('--primary-color'),
+                                getComputedStyle(document.body).getPropertyValue('--secondary-color')
+                            ]
+                        }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        }
+
+        function createChart(canvasId, type, labels, data, label) {
+            return new Chart(document.getElementById(canvasId), {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: getComputedStyle(document.body).getPropertyValue('--primary-color')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Percentage (%)' }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Real-time controls
+        document.getElementById('realtime-toggle').addEventListener('click', toggleRealtime);
+        document.getElementById('refresh-interval').addEventListener('change', updateRefreshInterval);
+
+        function toggleRealtime() {
+            isRealtimeActive = !isRealtimeActive;
+            const toggleBtn = document.getElementById('realtime-toggle');
+            toggleBtn.classList.toggle('active', isRealtimeActive);
+            toggleBtn.innerHTML = `<i class="fas fa-${isRealtimeActive ? 'pause' : 'play'}"></i> Realtime`;
+
+            if (isRealtimeActive) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            const interval = parseInt(document.getElementById('refresh-interval').value) * 1000;
+            autoRefreshInterval = setInterval(fetchData, interval);
+            document.getElementById('refreshtimer').textContent = autoRefreshInterval
+        }
+
+        function stopAutoRefresh() {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+
+        function updateRefreshInterval() {
+            var input = document.getElementById('refresh-interval')
+            if(input.value < 1 && laglock === true) {
+                input.value = 1;
+            }
+            if (isRealtimeActive) {
+                stopAutoRefresh();
+                startAutoRefresh();
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const username = localStorage.getItem('username');
+                const password = localStorage.getItem('password');
+                if (!username || !password) return;
+
+                const response = await fetch(`http://localhost:${DefaultPort}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) throw new Error('Data refresh failed');
+                
+                const data = await response.json();
+                currentServerData = data;
+                updateCharts(data);
+            } catch (error) {
+                console.error('Refresh error:', error);
+            }
+        }
+
+        function updateChartColors() {
+            const primary = getComputedStyle(document.body).getPropertyValue('--primary-color');
+            const secondary = getComputedStyle(document.body).getPropertyValue('--secondary-color');
+
+            if (charts.dbChart) {
+                charts.dbChart.data.datasets[0].backgroundColor = [primary, '#ecf0f1'];
+                charts.dbChart.update();
+            }
+            if (charts.networkChart) {
+                charts.networkChart.data.datasets[0].backgroundColor = [primary, secondary];
+                charts.networkChart.update();
+            }
+            if (charts.cpuChart) charts.cpuChart.data.datasets[0].backgroundColor = primary;
+            if (charts.ramChart) charts.ramChart.data.datasets[0].backgroundColor = primary;
+            
+            [charts.cpuChart, charts.ramChart].forEach(chart => chart && chart.update());
+
+            if (charts.gpuChart) {
+        const primary = getComputedStyle(document.body).getPropertyValue('--primary-color');
+        const secondary = getComputedStyle(document.body).getPropertyValue('--secondary-color');
+        charts.gpuChart.data.datasets[0].backgroundColor = [primary, secondary];
+        charts.gpuChart.update();
+    }
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            stopAutoRefresh();
+            isRealtimeActive = false;
+            document.getElementById('realtime-toggle').classList.remove('active');
+            document.getElementById('realtime-toggle').innerHTML = '<i class="fas fa-play"></i> Realtime';
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', fetchData);
+    </script>
+</body>
+</html>
