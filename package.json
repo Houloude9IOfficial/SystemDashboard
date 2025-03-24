@@ -1,0 +1,21 @@
+{
+  "name": "systemdashboard",
+  "version": "1.0.0",
+  "description": "A Simple Dashboard For System Stats",
+  "homepage": "https://github.com/Houloude9IOfficial/SystemDashboard#readme",
+  "bugs": {
+    "url": "https://github.com/Houloude9IOfficial/SystemDashboard/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Houloude9IOfficial/SystemDashboard.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  }
+}
