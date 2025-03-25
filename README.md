@@ -1,9 +1,10 @@
 
+
 # System Monitoring Dashboard
 
   
 
-A Simple Dashboard For System Stats
+*A Simple Dashboard For System Stats*
 
   
 
@@ -13,15 +14,15 @@ A Simple Dashboard For System Stats
 
   
 
-- CPU (Usage)
+- **CPU (Usage)**
 
-- GPU (Core Usage/VRAM Usage)
+- **GPU (Core Usage/VRAM Usage)**
 
-- RAM (Usage)
+- **RAM (Usage)**
 
-- Storage (Used/Free)
+- **Storage (Used/Free)**
 
-- Network (Traffic)
+- **Network Traffic**
 
   
 
@@ -29,9 +30,9 @@ A Simple Dashboard For System Stats
 
   
 
-- Color customization (Blue, Orange, Purple, Pink, Green)
+- **Color customization (Blue, Orange, Purple, Pink, Green)**
 
-- Theme customization (Dark, Light)
+- **Theme customization (Dark, Light)**
 
   
 
@@ -39,15 +40,15 @@ A Simple Dashboard For System Stats
 
   
 
-- Login System (Optional)
+- **Login System (Optional)**
 
-- Performance Settings
+- **Performance Settings**
 
-- Port Preference (Localhost)
+- **Port Preference (Localhost)**
 
-- Realtime Sync
+- **Realtime Sync**
 
-- Smooth Animations
+- **Smooth Animations**
 
   
 ## Installation
@@ -55,15 +56,15 @@ A Simple Dashboard For System Stats
 
 Open the folder that contains the following:
 
- 1. server.js
- 2. index.html
- 3. config.js
+ 1. *server.js*
+ 2. *index.html*
+ 3. *config.js*
 
 ##### Visual Studio Code
 
  1. Open the folder in **VSCODE**
  2. Open the terminal (**CTRL+SHIFT+`**)
- 3. In the terminal write start the server using: `node server.js`
+ 3. In the terminal start the server using: `node server.js`
  4. Once it says `Server running on port: {YourPort}` open the index.html in your browser using another server or as a local file
  5. It may prompt you to login using a password and a username, they are in the `config.js` file. (Default values are `admin` for both)
  6. Once you login it will show you all the stats for your system
@@ -76,9 +77,7 @@ Operating System: Windows 10+
 
 You must have [Node.js](https://nodejs.org) installed on your system
 
-  
-
-npm install express cors diskusage
+`npm install express cors diskusage`
 
   
 
@@ -87,6 +86,17 @@ npm install express cors diskusage
 This simple dashboard is 100% free and customizable to your own needs.
 
 For now, the GPU chart is only available for NVIDIA and AMD GPUs (AMD has NOT been tested!). If you have an NVIDIA GPU, make sure `nvidia-smi` is installed.
+
+
+### Laglock
+Laglock is a simple variable in the `config.js` file that you can toggle to improve dashboard performance. 
+When enabled, it restricts the `Realtime Timer` limit to a minimum of 1 second, preventing it from being set between 0 and 0.9 seconds. 
+This ensures that requests are not excessively sent to the server, which can negatively impact both front-end and back-end performance. 
+Additionally, it optimizes server responses by updating only what has changed with each request.
+| Server Work | Laglock Enabled | Laglock Disabled |
+|--|--|--|
+| Network Usage | Saves a variable and updates it only when a change is detected | Always updates the variable, even if nothing has changed |
+
 
 ## Credits
 
