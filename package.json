@@ -1,6 +1,6 @@
 {
   "name": "systemdashboard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A Simple Dashboard For System Stats",
   "homepage": "https://github.com/Houloude9IOfficial/SystemDashboard#readme",
   "bugs": {
@@ -16,5 +16,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "http": "^0.0.1-security",
+    "ws": "^8.18.2"
   }
 }

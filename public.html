@@ -1,7 +1,22 @@
+<script>
+// CONFIG | CUSTOMIZE EVERYTHING IN HERE:
+
+const port = 2453; // Default private port
+
+const wwsport = 2454; // Default private websocket port
+
+    let dashboardname = 'System Dashboard'
+    let default_theme = 'light'
+    let allowwatermark = true
+    //let port = 9998
+    //let wwsport = 9999
+    let show_welcome_message = true
+    let baseurl = `http://localhost:${port}`
+    let basews = `ws://localhost:${wwsport}`
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="config.js"></script>
     <script>
     function updateTheme(isDark, updatecharts = true) {
         document.documentElement.setAttribute('data-theme', isDark ? 'darktheme' : 'lighttheme');
@@ -146,6 +161,7 @@ body {
     flex-direction: column;
     gap: 15px;
     margin-bottom: 20px;
+    margin-top: 180px;
     padding: 15px;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border-radius: 16px;
@@ -361,19 +377,8 @@ button[type="submit"]:hover {
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
-#realtime-toggle {
-    width: 110px;
-}
-
 #realtime-toggle.active {
-    width: 110px;
     background: var(--secondary-color);
-}
-
-#realtime-toggle.disabled {
-    width: 110px;
-    background: var(--text-color);
-    cursor: not-allowed;
 }
 
 /* Theme Toggle Switch */
@@ -1287,18 +1292,8 @@ input:checked + .slider + .labels::after {
                 <div class="dashboard-card">
                     <i class="fas fa-hard-drive"></i>
                     <h3>Storage</h3>
-                    <div class="network-stats">
-                        <div>
-                            <div class="metric-value" id="db-free">0</div>
-                            <small>Free</small>
-                        </div>
-                        <div>
-                            <div class="metric-value" id="db-used">0</div>
-                            <small>Used</small>
-                        </div>
-                    </div>
-                    <div id="chart-container" style="max-width: 200px; margin: auto;">
-                      <canvas id="db-chart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="db-chart"></canvas>
                     </div>
                 </div>
 
@@ -1352,13 +1347,6 @@ input:checked + .slider + .labels::after {
     </div>
 
     <script>
-        
-
-
-        
-        var port = PrivateDefaultPort
-        let baseurl = `http://localhost:${port}`
-        let basews = `ws://localhost:${PrivateWWSPort}`
         const loginForm = document.getElementById('login-form');
         const loginContainer = document.getElementById('login-container');
         const dashboardContainer = document.getElementById('dashboard-container');
@@ -1426,9 +1414,9 @@ function getuserdata() {
         function formatNetworkValue(bytes) {
     const kb = bytes / 1024;
     if (kb < 0.0001) {
-        return kb.toExponential(2) + ' KB';
+        return kb.toExponential(2) + 'KB';
     } else {
-        return kb.toFixed(4) + ' KB';
+        return kb.toFixed(4) + 'KB';
     }
 }
 
@@ -1465,16 +1453,6 @@ function getuserdata() {
                     }
                 }
             });
-
-            const dbUsed = serverData.DB_used;
-            const dbAll = serverData.DB_all;
-            const dbFree = dbAll - dbUsed;
-            
-            const usedPercent = ((dbUsed / dbAll) * 100).toFixed(1);
-            const freePercent = ((dbFree / dbAll) * 100).toFixed(1);
-            
-            document.getElementById('db-used').textContent = `${usedPercent}%`;
-            document.getElementById('db-free').textContent = `${freePercent}%`;
 
             // CPU Usage
             charts.cpuChart = createColumnChart('cpu-chart', serverData.SysUsage * 100, 'CPU Usage');
@@ -1697,12 +1675,12 @@ function disableforminputs(disable) {
 
 
                 if(response.ok) {
-                await initWebSocket()
                 const data = await response
                 currentServerData = data;
                 loginContainer.style.display = 'none';
                 dashboardContainer.style.display = 'block';
                 await fetchData(true, true);
+                await initWebSocket()
                 return;
                 //let syncedserverdata = data
                 }
@@ -1744,15 +1722,14 @@ document.getElementById('refresh-btn').addEventListener('click', async () => {
 });
 
 
-
-                let isRealtimeActive = false;
-        let autoRefreshInterval = null;
-
 function formatBytes(bytes) {
     if (bytes < 1024) return `${bytes.toFixed(0)}B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)}KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
 }
+
+                let isRealtimeActive = false;
+        let autoRefreshInterval = null;
 
         function updateCharts(serverData) {
         updateStatusText(serverData.status)
@@ -1779,16 +1756,6 @@ function formatBytes(bytes) {
                     }}}}}
                 });
             }
-
-            const dbUsed = serverData.DB_used;
-            const dbAll = serverData.DB_all;
-            const dbFree = dbAll - dbUsed;
-            
-            const usedPercent = ((dbUsed / dbAll) * 100).toFixed(1);
-            const freePercent = ((dbFree / dbAll) * 100).toFixed(1);
-            
-            document.getElementById('db-used').textContent = `${usedPercent}%`;
-            document.getElementById('db-free').textContent = `${freePercent}%`;
             
 
 
@@ -1918,18 +1885,12 @@ function initWebSocket() {
 
     socket = new WebSocket(basews);
 
-socket.onopen = () => {
-    setTimeout(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-                username: getuserdata().username,
-                password: getuserdata().password
-            }));
-        } else {
-            console.warn("WebSocket still not open after onopen fired.");
-        }
-    }, 10);
-};
+    socket.onopen = () => {
+        socket.send(JSON.stringify({
+            username: getuserdata().username,
+            password: getuserdata().password
+        }));
+    };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -1954,7 +1915,6 @@ socket.onopen = () => {
     socket.onclose = () => {
         socketReady = false;
     };
-    
 }
 
 function sendWSRequest(payload) {
