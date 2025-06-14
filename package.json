@@ -18,6 +18,9 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "diskusage": "^1.2.0",
+    "express": "^5.1.0",
     "http": "^0.0.1-security",
     "ws": "^8.18.2"
   }
