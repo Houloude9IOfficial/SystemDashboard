@@ -1,3 +1,7 @@
+### Status: Project Archived
+The most stable release is **[v1](https://github.com/Houloude9IOfficial/SystemDashboard/releases/tag/1)**. Version **[v2](https://github.com/Houloude9IOfficial/SystemDashboard/releases/tag/2)** is available but may have some issues when used with public and private instances.
+
+---
 
 # 🖥️ System Monitoring Dashboard
 
